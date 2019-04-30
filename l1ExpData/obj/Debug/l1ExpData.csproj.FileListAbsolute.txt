@@ -1,0 +1,10 @@
+C:\Users\1\source\repos\l1ExpData\l1ExpData\bin\Debug\l1ExpData.exe.config
+C:\Users\1\source\repos\l1ExpData\l1ExpData\bin\Debug\l1ExpData.exe
+C:\Users\1\source\repos\l1ExpData\l1ExpData\bin\Debug\l1ExpData.pdb
+C:\Users\1\source\repos\l1ExpData\l1ExpData\obj\Debug\l1ExpData.csproj.ResolveComReference.cache
+C:\Users\1\source\repos\l1ExpData\l1ExpData\obj\Debug\l1ExpData.csproj.CoreCompileInputs.cache
+C:\Users\1\source\repos\l1ExpData\l1ExpData\obj\Debug\l1ExpData.exe
+C:\Users\1\source\repos\l1ExpData\l1ExpData\obj\Debug\l1ExpData.pdb
+C:\Users\1\source\repos\l1ExpData\l1ExpData\obj\Debug\l1ExpData.Properties.Resources.resources
+C:\Users\1\source\repos\l1ExpData\l1ExpData\obj\Debug\l1ExpData.csproj.GenerateResource.Cache
+C:\Users\1\source\repos\l1ExpData\l1ExpData\obj\Debug\l1ExpData.csprojResolveAssemblyReference.cache
