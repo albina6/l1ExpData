@@ -410,11 +410,11 @@ namespace l1ExpData
 
         static void Main(string[] args)
         {
-            //int n = 77, p = 9, startx = 3, starty = 108;//106
-            //double compare = 1.9839715;
+            int n = 77, p = 9, startx = 3, starty = 108;//106
+            double compare = 1.9839715;
 
-            int n = 4, p = 2, startx = 3, starty = 2;
-            double compare = 2.3646243;
+            //int n = 4, p = 2, startx = 3, starty = 2;
+            //double compare = 2.3646243;
             Excel ex = new Excel(@"D:\pro\6sem\компОбрЭкспДан\DataL1.xls", 1);
             var read = ex.ReadRange(startx,starty,startx+n,starty+p);
             int lenghtX = read.GetLength(0);
@@ -468,6 +468,8 @@ namespace l1ExpData
 
             var a = CoefficientLinRegression(y, matrixX);
             start = WriteAndStartChange(start, "coefficient A", ex, a);
+
+            start = WriteAndStartChange(start, "y", ex, y);
 
             var yCalculate = MultipleMatrix(matrixX, a);
             start = WriteAndStartChange(start, "Calculate y", ex, yCalculate);
