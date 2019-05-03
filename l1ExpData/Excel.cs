@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Office.Interop.Excel;
 using _Excel = Microsoft.Office.Interop.Excel;
 namespace l1ExpData
@@ -25,7 +21,6 @@ namespace l1ExpData
             ws = wb.Worksheets[sheet];
         }
 
-        // public string ReadCell() { }
         public void Save()
         {
             wb.Save();
@@ -74,7 +69,6 @@ namespace l1ExpData
                     {
                         xret--;
                         break;
-                        //arrdouble[xret, y - 1] = 0;
                     }
                     else
                     arrdouble[xret, y-1] = Convert.ToDouble( holder[x, y]);
@@ -103,27 +97,22 @@ namespace l1ExpData
 
         public void WriteToCellString(int i, int j, string s)
         {
-            //i++;
-            //j++;
+            ws.Cells[i, j].Value2 = s;
+        }
+
+        public void WriteToCellString(int i, int j, double s)
+        {
             ws.Cells[i, j].Value2 = s;
         }
 
         public void WriteRange(int startx, int starty, int endx, int endy, double [,]writeFloat)
         {
-            //startx++;
-            //starty++;
-            //endx--;
-            //endy-;
             Range range = (Range)ws.Range[ws.Cells[startx, starty], ws.Cells[endx, endy]];
             range.Value2 = writeFloat;
         }
 
         public void WriteRange(int startx, int starty, int endy, double[] writeFloat)
         {
-            //startx++;
-            //starty++;
-            //endx--;
-            //endy-;
             Range range = (Range)ws.Range[ws.Cells[startx, starty], ws.Cells[startx, endy]];
             range.Value2 = writeFloat;
         }

@@ -1,19 +1,8 @@
 ﻿using System;
-//using ;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data;
-//using Excel = Microsoft.Office.Interop.Excel;
-using Word = Microsoft.Office.Interop.Word;
-
 namespace l1ExpData
 {
     class Program
     {
-        //const int n = 77, p = 10, x = 3, y = 2;
-        
         static double [] Average(double[,] matrix)
         {
             int x = matrix.GetLength(0), y = matrix.GetLength(1);
@@ -181,36 +170,45 @@ namespace l1ExpData
             return start;
         }
 
-        static int WriteAndStartChange(int start, string name, Excel ex, double[] matrix)
+        static int WriteAndStartChange(int start, string name, Excel ex, double[] array)
         {
             ex.WriteToCellString(start, 1, name);
             start++;
-            ex.WriteRange(start, 2, 1 + matrix.Length, matrix);
+            ex.WriteRange(start, 2, 1 + array.Length, array);
             start ++;
             return start;
         }
 
-        static double [,] MultipleMatrix(double [,] first,double [] second)
+        static int WriteAndStartChange(int start, string name, Excel ex, double x)
+        {
+            ex.WriteToCellString(start, 1, name);
+            start++;
+            ex.WriteToCellString(start, 2, x);
+            start++;
+            return start;
+        }
+
+        static double [] MultipleMatrix(double [,] first,double [] second)
         {
             if (first.GetLength(1) != second.Length)
             {
                 Console.WriteLine("I can't multiply this matrixs");
                 Console.Read();
-                var inv = new double[,] { { 1 } };
+                var inv = new double[] {  1  };
                 return inv;
             }
             else
             {
                 int n = second.Length, m = first.GetLength(0);
-                var a =new double[n, 1];
+                var a =new double[m];
                 double sum = 0;
-                for(int i = 0; i < n; i++)
+                for(int i = 0; i < m; i++)
                 {
                     for (int r = 0; r < n; r++)
                     {
                         sum += first[i, r] * second[r];
                     }
-                    a[i, 0] = sum;
+                    a[i] = sum;
                     sum = 0;
                 }
                 return a;
@@ -220,7 +218,7 @@ namespace l1ExpData
 
         static double [,] MultipleMatrix(double [,] firstMatrix,double [,] secondMatrix)
         {
-            int n;
+            int m;
             if (firstMatrix.GetLength(1) != secondMatrix.GetLength(0))
             {
                 Console.WriteLine("I can't multiply this matrixs");
@@ -230,17 +228,17 @@ namespace l1ExpData
             }
             else
             {
-                n = firstMatrix.GetLength(1);
-                int m = firstMatrix.GetLength(0), k = secondMatrix.GetLength(1);
-                var multipleMatrix = new double[m,k];
+                m = firstMatrix.GetLength(1);
+                int p = firstMatrix.GetLength(0), n = secondMatrix.GetLength(1);
+                var multipleMatrix = new double[p,n];
                 double sum = 0;
-                for (int i = 0; i < m; i++)
+                for (int j = 0; j < n; j++)
                 {
-                    for (int j = 0; j < k; j++)
+                    for (int i = 0; i < p; i++)
                     {
-                        for(int s = 0; s < n; s++)
+                        for (int r = 0; r < m; r++)
                         {
-                            sum += firstMatrix[i, s] * secondMatrix[s, j];
+                            sum += firstMatrix[i, r] * secondMatrix[r, j];
                         }
                         multipleMatrix[i, j] = sum;
                         sum = 0;
@@ -263,7 +261,6 @@ namespace l1ExpData
             }
             return returnMatrix;
         }
-        ////////////////////
 
         static double [,] RegressionAnalysisMatrixX(int number, double[,] matrix)
         {
@@ -273,7 +270,6 @@ namespace l1ExpData
             for (int i = 0; i < xRow; i++)
             {
                 y[i] = matrix[i, number];
-                // x[columnY, i] = 1;
             }
             var covY = CovY(y, matrix);
             var matX = new double[xRow, xColumn];
@@ -304,7 +300,6 @@ namespace l1ExpData
             }
             return x;
         }
-        //////////////////////////////////////
 
         static double [,] InversMatrix( double [,] xMatrix)
         {
@@ -331,7 +326,7 @@ namespace l1ExpData
                 {
                     inversMatrix[i, i] = 1;
                 }
-                for (int i = 0, k = 0; k < n; k++)
+                for (int k = 0; k < n; k++)
                 {
                     var a = matX[k, k];
                     if (a != 0)
@@ -352,7 +347,7 @@ namespace l1ExpData
                                     {
                                         inversMatrix[p, s] -= inversMatrix[k, s] * a;
                                     }
-                                    for (int j = 0; j < n; j++)//////////
+                                    for (int j = 0; j < n; j++)
                                     {
                                         matX[p, j] -= matX[k, j] * a;
                                     }
@@ -377,7 +372,7 @@ namespace l1ExpData
                         var a = matX[i, k];
                         for (int s = 0; s < n; s++)
                         {
-                            inversMatrix[i, s] -= inversMatrix[k, s] * a;//////////
+                            inversMatrix[i, s] -= inversMatrix[k, s] * a;
                         }
                         for (int j = n - 1; j >= k; j--)
                         {
@@ -391,7 +386,7 @@ namespace l1ExpData
             }
         }
 
-        static double[,] CoefficientLinRegression(double[] y, double[,] xMatrix)
+        static double[] CoefficientLinRegression(double[] y, double[,] xMatrix)
         {
             var xTransposition = Transposition(xMatrix);
             var xMultiple = MultipleMatrix(xTransposition, xMatrix);
@@ -401,30 +396,35 @@ namespace l1ExpData
             return a;
         }
 
-         
+        static double CoeffDeterm(double yAverage, double[] y, double[]yCalculation)
+        {
+            int yLengh = y.Length;
+            double numerator=0, denominator=0;
+            for(int i = 0; i < yLengh; i++)
+            {
+                numerator += (yCalculation[i] - yAverage) * (yCalculation[i] - yAverage);
+                denominator += (y[i] - yAverage) * (y[i] - yAverage);
+            }
+            return numerator / denominator;
+        }
 
         static void Main(string[] args)
         {
             //int n = 77, p = 9, startx = 3, starty = 108;//106
             //double compare = 1.9839715;
 
-            int n = 2, p = 2, startx = 3, starty = 2;
+            int n = 4, p = 2, startx = 3, starty = 2;
             double compare = 2.3646243;
             Excel ex = new Excel(@"D:\pro\6sem\компОбрЭкспДан\DataL1.xls", 1);
             var read = ex.ReadRange(startx,starty,startx+n,starty+p);
             int lenghtX = read.GetLength(0);
             int lenghtY = read.GetLength(1);
-            ////del ws 2
-
 
             ex.CreateNewSheet();
 
             int start = 1;
             ex.SelectWorksheet(2);
 
-
-            //ex.WriteToCellString(start, 1, "Average:");
-            //start++;
             var average = Average(read);
             start = WriteAndStartChange(start, "Average:", ex, average);
 
@@ -457,35 +457,29 @@ namespace l1ExpData
             // ex.Save();
 
             int number = 1;
-
             var y = new double[lenghtX];
             for (int i = 0; i <lenghtX ; i++)
             {
                 y[i] = read[i,number];
-                // x[columnY, i] = 1;
             }
 
-            ex.WriteToCellString(start, 1, "matrix x");
-            start++;
             var matrixX = RegressionAnalysisMatrixX(number, read);
-            ex.WriteRange(start, 2, start + matrixX.GetLength(0) - 1, 1 + matrixX.GetLength(1), matrixX);
-            start += lenghtY + 1;
-            double [,] inv = { { 5,11,3}, {11,25.25,7.5},{3,7.5,3 } };
-            var inves = InversMatrix(inv);
-            start = WriteAndStartChange(start, "Inves", ex, inves);
-
-            var transp = Transposition(read);
-            start = WriteAndStartChange(start, "transp", ex, transp);
-
-            var mult = MultipleMatrix(transp, read);
-            start = WriteAndStartChange(start, "mult", ex, mult);
-
-            var multY =  MultipleMatrix( read,y);
-            start = WriteAndStartChange(start, "multY", ex,multY );
-
+            start = WriteAndStartChange(start, "matrix x", ex, matrixX);
 
             var a = CoefficientLinRegression(y, matrixX);
             start = WriteAndStartChange(start, "coefficient A", ex, a);
+
+            var yCalculate = MultipleMatrix(matrixX, a);
+            start = WriteAndStartChange(start, "Calculate y", ex, yCalculate);
+
+            var yAverage = Average(y);
+            start = WriteAndStartChange(start, "y average", ex, yAverage);
+
+            var yCalculateAverage = Average(yCalculate);
+            start = WriteAndStartChange(start, "y calculate average", ex, yCalculateAverage);
+
+            var coeffDeterm = CoeffDeterm(yAverage,y,yCalculate);
+            start = WriteAndStartChange(start, "coefficient of determination", ex, coeffDeterm);
 
             Console.Read();
             ex.Close();
