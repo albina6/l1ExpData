@@ -116,5 +116,10 @@ namespace l1ExpData
             Range range = (Range)ws.Range[ws.Cells[startx, starty], ws.Cells[startx, endy]];
             range.Value2 = writeFloat;
         }
+        public void WriteRange(int startx, int starty, int endy, int[] writeFloat)
+        {
+            Range range = (Range)ws.Range[ws.Cells[startx, starty], ws.Cells[startx, endy]];
+            range.Value2 = writeFloat;
+        }
     }
 }

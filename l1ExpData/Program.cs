@@ -82,7 +82,7 @@ namespace l1ExpData
             {
                 for (int j = 0; j < y; j++)
                 {
-                        returnAverage[i, j] = (matrix[i,j]-averege[j])/dispersion[j];
+                        returnAverage[i, j] = (matrix[i,j]-averege[j])/Math.Sqrt( dispersion[j]);
                 }
             }
             return returnAverage;
@@ -179,6 +179,14 @@ namespace l1ExpData
             return start;
         }
 
+        static int WriteAndStartChange(int start, string name, Excel ex, int[] array)
+        {
+            ex.WriteToCellString(start, 1, name);
+            start++;
+            ex.WriteRange(start, 2, 1 + array.Length, array);
+            start++;
+            return start;
+        }
         static int WriteAndStartChange(int start, string name, Excel ex, double x)
         {
             ex.WriteToCellString(start, 1, name);
@@ -441,7 +449,7 @@ namespace l1ExpData
         static void ChangeMatrix(double [,] aMatrix,double[,]tMatrix, double[] maxElem)
         {
             var n = aMatrix.GetLength(0);
-            double eps = 0.001;
+            double eps = 0.01;
             int p = (int)maxElem[1], q = (int)maxElem[2];
             double y=(aMatrix[p,p]-aMatrix[q,q])/ 2;
             double x,s,c;
@@ -479,29 +487,16 @@ namespace l1ExpData
             }
         }
 
-        static void Jacobi(Excel ex,int start, double[,] matrix, double eps,double hi2)
+        static void Jacobi( double[,] aMatrix,double [,] tMatrix, double eps,double hi2)
         {
-            if(matrix.GetLength(0)!=matrix.GetLength(1))
+            if(aMatrix.GetLength(0)!=aMatrix.GetLength(1))
             {
-                Console.WriteLine("This matrix is invalid");
+                Console.WriteLine("This matrix is invalid Jacobi");
                 Console.Read();
             }
             else
             {
-                int n = matrix.GetLength(0);
-                var aMatrix = new double[n, n];
-                for(int i = 0; i < n; i++)
-                {
-                    for(int j = 0; j < n; j++)
-                    {
-                        aMatrix[i, j] = matrix[i, j];
-                    }
-                }
-                var tMatrix = new double[n, n];
-                for (int i = 0; i < n; i++)
-                {
-                    tMatrix[i, i] = 1;
-                }
+                int n = aMatrix.GetLength(0);
                 double a0;
                 double sum = 0;
                 for (int j = 1; j < n; j++)
@@ -511,9 +506,10 @@ namespace l1ExpData
                         sum +=  aMatrix[i, j] * aMatrix[i, j];
                     } 
                 }
-                double d = 2 * sum * n;
-                if (sum < hi2)
+                double d = 2 * sum * n * n;
+                if (d<= hi2)
                 {
+                    Console.WriteLine("correl matrix like E-matrix");
                     Console.Read();
                 }
                 else
@@ -521,7 +517,7 @@ namespace l1ExpData
                     a0 = Math.Sqrt(sum * 2) / n;
                     var ai = a0;
                     var maxElem = MaxElem(aMatrix, n);
-                    double epsel = 0.001;
+                    double epsel = 0.0001;
                     while (maxElem[0] > eps * a0)
                     {
                         if (maxElem[0] - ai > epsel)
@@ -529,59 +525,236 @@ namespace l1ExpData
                         ai = ai / (n * n);
                         maxElem = MaxElem(aMatrix, n);
                     }
-                    var lamda = new double[n];
-                    for (int i = 0; i < n; i++)
-                        lamda[i] = aMatrix[i, i];
-                    start = WriteAndStartChange(start, "Eigenvector", ex, lamda);
-                    start = WriteAndStartChange(start, "Matrix T", ex, tMatrix);
                 }
 
                 
             }
         }
 
+        static void SortT(double [,] matrixT, int [] index)
+        {
+            if( (matrixT.GetLength(0) != matrixT.GetLength(1)) && (matrixT.GetLength(1) != index.Length))
+            {
+                Console.WriteLine("this matrix invalid");
+                Console.Read();
+            }
+            else
+            {
+                int n = matrixT.GetLength(0);
+
+                for (int i=0;i<n;i++)
+                {
+                    if (i != index[i]&& i<index[i])
+                    {
+                        double a;
+                        int indexColumn = index[i];
+                       // int
+                        for (int j = 0; j < n; j++)
+                        {
+                            a = matrixT[ j,i];
+                            matrixT[j, i] = matrixT[j, indexColumn];
+                            matrixT[j, indexColumn] = a;
+                        }
+                        //index[indexColumn] = i;
+                       // index[i] = indexColumn;
+                    }
+                    
+                }
+            }
+        }
+
+        static int [] SortIncrease(double [] array)
+        {
+            int n = array.Length;
+            var index = new int[n];
+            for (int i = 0; i < n; i++)
+            {
+                index[i] = i;
+            }
+            for (int i = 0; i < n; i++)
+            {
+                double max = -10000;
+                int k =i;
+                for(int j=i; j < n; j++)
+                {
+                    if (array[j] > max)
+                    {
+                        max =Math.Abs( array[j]);
+                        k = j;
+                    }
+                }
+                if (k != i)
+                {
+                    double a = array[i];
+                    int b = index[i];
+                    array[i] = max;
+                    index[i] = k;
+                    array[k] = array[i];
+                    index[k] = i;
+                }
+                
+            }
+            return index;
+        }
+
+        static double [,] MGKMatrix(double [,] cMatrix, double[,] xMatrix)
+        {
+            int x = xMatrix.GetLength(0), y = xMatrix.GetLength(1);
+            var mgkMatrix = new double[x, y];
+            if ((cMatrix.GetLength(0)!=cMatrix.GetLength(1)) && (cMatrix.GetLength(0) != y))
+            {
+                Console.WriteLine("This matrix Invalid");
+                Console.Read();
+            }
+            else
+            {
+                for (int j = 0; j < y; j++)
+                {
+                    double sum = 0;
+                    for (int i = 0; i < x; i++)
+                    {
+                        for (int k = 0; k < y; k++)
+                        {
+                            sum += cMatrix[ j,k] * xMatrix[ i,k];
+                        }
+                        mgkMatrix[i, j] = sum;
+                    }
+
+                }
+            }
+            return mgkMatrix;
+        }
+
+        static double SumArray(double [] array)
+        {
+            int n = array.Length;
+            double sum = 0;
+            for (int i = 0; i < n; i++)
+            {
+                sum += array[i];
+            }
+            return sum;
+        }
+
         static void Main(string[] args)
         {
             int n = 77, p = 9, startx = 3, starty = 108;//106
-            double compare = 1.9839715;
+            //double compare = 1.9839715;
             int start = 1;
 
             //int n = 3, p = 3, startx = 3, starty = 2;
             //int n = 4, p = 2, startx = 3, starty = 2;
             //double compare = 2.3646243;
             Excel ex = new Excel(@"D:\pro\6sem\компОбрЭкспДан\DataL1.xls", 1);
-            var read = ex.ReadRange(startx,starty,startx+n,starty+p);
-            int lenghtX = read.GetLength(0);
-            int lenghtY = read.GetLength(1);
+            //var read = ex.ReadRange(startx,starty,startx+n,starty+p);
+            //int lenghtX = read.GetLength(0);
+            //int lenghtY = read.GetLength(1);
 
-            n = 3;
-            p = 3;
-            startx = 3;
-            starty = 2;
-            var forcorr = ex.ReadRange(startx, starty, startx + n, starty + p);
+            //n = 3;
+            //p = 3;
+            //startx = 3;
+            //starty = 2;
             
+            var read = ex.ReadRange(startx, starty, startx + n, starty + p);
+            int x = read.GetLength(0), y = read.GetLength(1);
+            var aMatrix = new double[x, y];
+            for(int i = 0; i < x; i++)
+            {
+                for(int j = 0; j < y; j++)
+                {
+                    aMatrix[i, j] = read[i, j];
+                }
+            }
             ex.CreateNewSheet();        
             ex.SelectWorksheet(2);
 
-            var average = Average(read);
+            ////var average = Average(read);
+            ////start = WriteAndStartChange(start, "Average:", ex, average);
+
+            //////в идеале можно сократить DRY
+            ////var dispersion = Dispersion(average, read);
+            ////start = WriteAndStartChange(start, "Dispertion", ex, dispersion);
+
+            ////var sqrtDispersion = Dispersion(average, read);
+            ////for (int k = 0; k < sqrtDispersion.Length; k++)
+            ////{
+            ////    sqrtDispersion[k] = Math.Sqrt(sqrtDispersion[k]);
+            ////}
+            ////start = WriteAndStartChange(start, "SQRT Dispersion", ex, sqrtDispersion);
+
+            ////var covMatrix = Cov(average, read);
+            ////start = WriteAndStartChange(start, "COV matrix:", ex, covMatrix);
+
+            ////var standartMatrix = StandartMatrix(sqrtDispersion, average, read);
+            ////start = WriteAndStartChange(start, "Standart matrix:", ex, standartMatrix);
+
+            ////var averageStand = Average(standartMatrix);
+            ////start = WriteAndStartChange(start, "Average column standart Matrix:", ex, averageStand);
+
+            ////var correlMatrix = CorrelMatrix(standartMatrix);
+            ////start = WriteAndStartChange(start, "CORREL matrix", ex, correlMatrix);
+
+            ////var signifMatrix = Significance(compare, correlMatrix);
+            ////start = WriteAndStartChange(start, "Significance", ex, signifMatrix);
+
+            ////// ex.Save();
+
+            ////int number = 1;
+            ////var y = new double[lenghtX];
+            ////for (int i = 0; i < lenghtX; i++)
+            ////{
+            ////    y[i] = read[i, number];
+            ////}
+
+            ////var matrixX = RegressionAnalysisMatrixX(number, read);
+            ////start = WriteAndStartChange(start, "matrix x", ex, matrixX);
+
+            ////var a = CoefficientLinRegression(y, matrixX);
+            ////start = WriteAndStartChange(start, "coefficient A", ex, a);
+
+            ////start = WriteAndStartChange(start, "y", ex, y);
+
+            ////var yCalculate = MultipleMatrix(matrixX, a);
+            ////start = WriteAndStartChange(start, "Calculate y", ex, yCalculate);
+
+            ////var yAverage = Average(y);
+            ////start = WriteAndStartChange(start, "y average", ex, yAverage);
+
+            ////var yCalculateAverage = Average(yCalculate);
+            ////start = WriteAndStartChange(start, "y calculate average", ex, yCalculateAverage);
+
+            ////var coeffDeterm = CoeffDeterm(yAverage, y, yCalculate);
+            ////start = WriteAndStartChange(start, "coefficient of determination", ex, coeffDeterm);
+
+
+            //////start = WriteAndStartChange(start, "my data ", ex, standartMatrix);
+            //////Jacobi(ex, start, standartMatrix, 0.005);
+
+            //////////////////
+
+
+            var average = Average(aMatrix);
             start = WriteAndStartChange(start, "Average:", ex, average);
 
             //в идеале можно сократить DRY
-            var dispersion = Dispersion(average, read);
+            var dispersion = Dispersion(average, aMatrix);
             start = WriteAndStartChange(start, "Dispertion", ex, dispersion);
 
-            var sqrtDispersion = Dispersion(average, read);
+            var sqrtDispersion = Dispersion(average, aMatrix);
             for (int k = 0; k < sqrtDispersion.Length; k++)
             {
                 sqrtDispersion[k] = Math.Sqrt(sqrtDispersion[k]);
             }
             start = WriteAndStartChange(start, "SQRT Dispersion", ex, sqrtDispersion);
 
-            var covMatrix = Cov(average, read);
+            var covMatrix = Cov(average, aMatrix);
             start = WriteAndStartChange(start, "COV matrix:", ex, covMatrix);
 
-            var standartMatrix = StandartMatrix(sqrtDispersion, average, read);
+            var standartMatrix = StandartMatrix(dispersion, average, aMatrix);
             start = WriteAndStartChange(start, "Standart matrix:", ex, standartMatrix);
+
+            covMatrix = Cov(average, standartMatrix);
+            start = WriteAndStartChange(start, "COV matrix:", ex, covMatrix);
 
             var averageStand = Average(standartMatrix);
             start = WriteAndStartChange(start, "Average column standart Matrix:", ex, averageStand);
@@ -589,46 +762,72 @@ namespace l1ExpData
             var correlMatrix = CorrelMatrix(standartMatrix);
             start = WriteAndStartChange(start, "CORREL matrix", ex, correlMatrix);
 
-            var signifMatrix = Significance(compare, correlMatrix);
-            start = WriteAndStartChange(start, "Significance", ex, signifMatrix);
-
-            // ex.Save();
-
-            int number = 1;
-            var y = new double[lenghtX];
-            for (int i = 0; i < lenghtX; i++)
+            int lenghtX =correlMatrix.GetLength(0);
+            var xMatrix = new double[lenghtX, lenghtX];
+            for(int i = 0; i < lenghtX; i++)
             {
-                y[i] = read[i, number];
+                for(int j = 0; j < lenghtX; j++)
+                {
+                    xMatrix[i, j] = correlMatrix[i, j];
+                }
             }
 
-            var matrixX = RegressionAnalysisMatrixX(number, read);
-            start = WriteAndStartChange(start, "matrix x", ex, matrixX);
-
-            var a = CoefficientLinRegression(y, matrixX);
-            start = WriteAndStartChange(start, "coefficient A", ex, a);
-
-            start = WriteAndStartChange(start, "y", ex, y);
-
-            var yCalculate = MultipleMatrix(matrixX, a);
-            start = WriteAndStartChange(start, "Calculate y", ex, yCalculate);
-
-            var yAverage = Average(y);
-            start = WriteAndStartChange(start, "y average", ex, yAverage);
-
-            var yCalculateAverage = Average(yCalculate);
-            start = WriteAndStartChange(start, "y calculate average", ex, yCalculateAverage);
-
-            var coeffDeterm = CoeffDeterm(yAverage, y, yCalculate);
-            start = WriteAndStartChange(start, "coefficient of determination", ex, coeffDeterm);
-
-
-            //start = WriteAndStartChange(start, "my data ", ex, standartMatrix);
-            //Jacobi(ex, start, standartMatrix, 0.005);
-
             //////////////
+            
+            var tMatrix = new double[lenghtX, lenghtX];
+            for (int i = 0; i < lenghtX; i++)
+            {
+                tMatrix[i, i] = 1;
+            }
 
-            start = WriteAndStartChange(start, "test ", ex, forcorr);
-            Jacobi(ex, start, forcorr, 0.005,0);
+            start = WriteAndStartChange(start, "test ", ex, xMatrix);
+            double hi2 = 7.84;
+            Jacobi(xMatrix, tMatrix, 0.01, hi2);
+
+            ////var lamda = new double[n];
+            ////for (int i = 0; i < n; i++)
+            ////    lamda[i] = forcorr[i, i];
+
+
+            var lambda = new double[lenghtX];
+            for (int i = 0; i < lenghtX; i++)
+                lambda[i] = xMatrix[i, i];
+            start = WriteAndStartChange(start, "Eigenvector", ex, lambda);
+
+            var index = SortIncrease(lambda);
+            start = WriteAndStartChange(start, "lambda ", ex, index);
+
+            start = WriteAndStartChange(start, "tmatrix ", ex, tMatrix);
+
+            //for (int i = 0; i < lenghtX; i++)
+            //{
+            //    tMatrix[i, 1] *= -1;
+            //}
+            //for (int i = 0; i < lenghtX; i++)
+            //{
+            //    tMatrix[i, 2] *= -1;
+            //}
+            SortT(tMatrix, index);
+            start = WriteAndStartChange(start, "tmatrix sort", ex, tMatrix);
+
+            var mgkMatrix = MGKMatrix(tMatrix, xMatrix);
+            start = WriteAndStartChange(start, "mgkMatrix", ex,mgkMatrix);
+
+            var averageX = Average(correlMatrix);
+            var averageMGK = Average(mgkMatrix);
+            start = WriteAndStartChange(start, "averageX", ex, averageX);
+            start = WriteAndStartChange(start, "averageMGK", ex, averageMGK);
+
+            var dispersionMGK = Dispersion(averageMGK,mgkMatrix);
+            var dispersionXMatrix = Dispersion(averageX, correlMatrix);
+            start = WriteAndStartChange(start, "DispertionMGK", ex, dispersionMGK);
+            start = WriteAndStartChange(start, "DispertionX", ex, dispersionXMatrix);
+
+            double sumDispersionMGK = SumArray(dispersionMGK);
+            double sumDispersionX = SumArray(dispersionXMatrix);
+
+            start = WriteAndStartChange(start, "sumDispersionMGK", ex, sumDispersionMGK);
+            start = WriteAndStartChange(start, "sumDispersionX", ex, sumDispersionX);
 
             Console.Read();
             ex.Close();
