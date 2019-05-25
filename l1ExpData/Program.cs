@@ -817,6 +817,25 @@ namespace l1ExpData
             start = WriteAndStartChange(start, "sumDispersionMGK", ex, sumDispersionMGK);
             start = WriteAndStartChange(start, "sumDispersionX", ex, sumDispersionX);
 
+            double sumlambda = 0;
+            for (int i = 0; i < lenghtX; i++)
+            {
+                sumlambda += lambda[i];
+            }
+            int countL;
+            double ip=0;
+            double sum = 0;
+            for (countL = 0; countL < lenghtX; countL++)
+            {
+                sum += lambda[countL];
+                ip = sum / sumlambda;
+                if (ip > 0.95)
+                    break;
+            }
+            countL++;
+            start = WriteAndStartChange(start, "I(p)", ex, ip);
+            start = WriteAndStartChange(start, "count lambda p", ex, countL);
+            
             Console.Read();
             ex.Close();
         }
